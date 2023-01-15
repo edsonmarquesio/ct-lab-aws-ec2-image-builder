@@ -18,3 +18,6 @@ Repositório Criado Para Lab do Serviço da AWS EC2 Image Builder
 
 >  [EC2ImageBuilder](./CloudFormation/cf-ec2-image-builder-linux.yml)
 
+### Links Úteis
+
+> [Workshop EC2 Image Builder](https://ec2-image-builder.workshop.aws/)
