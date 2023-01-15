@@ -16,7 +16,5 @@ Repositório Criado Para Lab do Serviço da AWS EC2 Image Builder
 
 >  [AutoScallinGroup](./CloudFormation/cf-asg-ec2-image-builder-linux.yaml)
 
-##
-
 >  [EC2ImageBuilder](./CloudFormation/cf-ec2-image-builder-linux.yml)
 
