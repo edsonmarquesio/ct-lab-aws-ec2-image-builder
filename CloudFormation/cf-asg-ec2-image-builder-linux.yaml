@@ -1,0 +1,237 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AmazonLinux2LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  EnvironmentName:
+    Type: String
+    Default: asg-ec2-image-builder-linux
+    Description: Name of ASG blueprint
+  SpotInstanceType1:
+    Type: String
+    Default: c3.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType2:
+    Type: String
+    Default: c4.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType3:
+    Type: String
+    Default: t3.medium
+    Description: Possible instance type to use for Spot
+  SpotInstanceType4:
+    Type: String
+    Default: c5.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType5:
+    Type: String
+    Default: t2.medium
+    Description: Possible instance type to use for Spot
+  SpotInstanceType6:
+    Type: String
+    Default: t2.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType7:
+    Type: String
+    Default: m4.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType8:
+    Type: String
+    Default: t3.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType9:
+    Type: String
+    Default: m5.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType10:
+    Type: String
+    Default: m3.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType11:
+    Type: String
+    Default: r3.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType12:
+    Type: String
+    Default: r5.large
+    Description: Possible instance type to use for Spot
+  SpotInstanceType13:
+    Type: String
+    Default: r4.large
+    Description: Possible instance type to use for Spot
+Resources:
+  spotBlueprintsEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2008-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+  spotBlueprintsEC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: spotBlueprintsEC2Role
+  SampleWebAppAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      CapacityRebalance: true
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      MinSize: "1"
+      MaxSize: "1"
+      DesiredCapacity: "1"
+      VPCZoneIdentifier:
+        - subnet-026188f49f73e2f93
+        - subnet-0927309ec69542f5e
+        - subnet-011764cd8b220ac81
+        - subnet-07e9ce26b41553f70
+        - subnet-02c945e8f760b7e95
+        - subnet-07cc99ff7bb34329e
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: 0
+          OnDemandPercentageAboveBaseCapacity: 0
+          SpotAllocationStrategy: capacity-optimized
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId:
+              Ref: SampleWebAppLaunchTemplate
+            Version:
+              Fn::GetAtt:
+                - SampleWebAppLaunchTemplate
+                - DefaultVersionNumber
+          Overrides:
+            - InstanceType:
+                Ref: SpotInstanceType1
+            - InstanceType:
+                Ref: SpotInstanceType2
+            - InstanceType:
+                Ref: SpotInstanceType3
+            - InstanceType:
+                Ref: SpotInstanceType4
+            - InstanceType:
+                Ref: SpotInstanceType5
+            - InstanceType:
+                Ref: SpotInstanceType6
+            - InstanceType:
+                Ref: SpotInstanceType7
+            - InstanceType:
+                Ref: SpotInstanceType8
+            - InstanceType:
+                Ref: SpotInstanceType9
+            - InstanceType:
+                Ref: SpotInstanceType10
+            - InstanceType:
+                Ref: SpotInstanceType11
+            - InstanceType:
+                Ref: SpotInstanceType12
+            - InstanceType:
+                Ref: SpotInstanceType13
+      TargetGroupARNs:
+        - Ref: SampleWebAppTargetGroup
+      Tags:
+        - Key: Name
+          Value: EnvironmentName
+          PropagateAtLaunch: true
+  SampleWebAppLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId:
+          Ref: AmazonLinux2LatestAmiId
+        SecurityGroupIds:
+          - Ref: SampleWebAppEC2SecurityGroup
+        UserData:
+          Fn::Base64: >
+            #!/bin/bash
+
+            yum update -y
+
+            amazon-linux-extras install epel -y
+
+            yum -y install httpd jq  
+
+            echo "Olá Cloud Treinamentos! 
+
+            O ID da Minha Instância na AWS é $(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+
+            O Meu Tipo de Instância na AWS é $(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+
+            E a Minha Zona de Disponibilidade é $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)" > /var/www/html/index.html
+
+            service httpd start
+        IamInstanceProfile:
+          Name:
+            Ref: spotBlueprintsEC2Profile
+  SampleWebAppELBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for apache instances
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+      VpcId: vpc-04ddbf841c6d2ea3d
+  SampleWebAppEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for apache instances
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      SecurityGroupIngress:
+        - SourceSecurityGroupId:
+            Ref: SampleWebAppELBSecurityGroup
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+      VpcId: vpc-04ddbf841c6d2ea3d
+  SampleWebAppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      SecurityGroups:
+        - Ref: SampleWebAppELBSecurityGroup
+      Subnets:
+        - subnet-026188f49f73e2f93
+        - subnet-0927309ec69542f5e
+        - subnet-011764cd8b220ac81
+        - subnet-07e9ce26b41553f70
+        - subnet-02c945e8f760b7e95
+        - subnet-07cc99ff7bb34329e
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: routing.http.drop_invalid_header_fields.enabled
+          Value: "true"
+  SampleWebAppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: "80"
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "90"
+        - Key: load_balancing.algorithm.type
+          Value: least_outstanding_requests
+      VpcId: vpc-04ddbf841c6d2ea3d
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn:
+        Ref: SampleWebAppLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: SampleWebAppTargetGroup
