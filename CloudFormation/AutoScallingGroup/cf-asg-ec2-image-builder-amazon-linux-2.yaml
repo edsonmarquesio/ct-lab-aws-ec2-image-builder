@@ -138,7 +138,7 @@ Resources:
         - Ref: SampleWebAppTargetGroup
       Tags:
         - Key: Name
-          Value: EnvironmentName
+          Value: asg-ec2-image-builder-amazon-linux-2
           PropagateAtLaunch: true
   SampleWebAppLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
