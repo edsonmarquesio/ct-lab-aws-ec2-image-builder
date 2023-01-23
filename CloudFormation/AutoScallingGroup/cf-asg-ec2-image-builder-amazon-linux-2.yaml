@@ -5,7 +5,7 @@ Parameters:
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   EnvironmentName:
     Type: String
-    Default: asg-ec2-image-builder-linux
+    Default: asg-ec2-image-builder-amazon-linux-2
     Description: Name of ASG blueprint
   SpotInstanceType1:
     Type: String
